@@ -1,0 +1,331 @@
+name: Build & Release AntigravityWeb APK
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Generate Android Wrapper Project (if repo is Node.js only)
+        run: |
+          if [ ! -f "settings.gradle.kts" ] && [ ! -f "settings.gradle" ]; then
+            mkdir -p app/src/main/java/com/antigravity/web
+            mkdir -p app/src/main/res/values
+            mkdir -p app/src/main/assets
+
+            cp -r src bin package.json README.md app/src/main/assets/ 2>/dev/null || true
+
+            cat << 'EOF' > settings.gradle
+          pluginManagement {
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          rootProject.name = "AntigravityWeb"
+          include ':app'
+          EOF
+
+            cat << 'EOF' > build.gradle
+          plugins {
+              id 'com.android.application' version '8.2.2' apply false
+          }
+          EOF
+
+            cat << 'EOF' > gradle.properties
+          org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+          android.useAndroidX=true
+          EOF
+
+            cat << 'EOF' > app/build.gradle
+          plugins {
+              id 'com.android.application'
+          }
+          android {
+              namespace 'com.antigravity.web'
+              compileSdk 34
+
+              defaultConfig {
+                  applicationId "com.antigravity.web.onmob"
+                  minSdk 24
+                  targetSdk 34
+                  versionCode 1
+                  versionName "1.0.0"
+              }
+              buildTypes {
+                  debug {
+                      minifyEnabled false
+                  }
+              }
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_17
+                  targetCompatibility JavaVersion.VERSION_17
+              }
+          }
+          dependencies {
+          }
+          EOF
+
+            cat << 'EOF' > app/src/main/res/values/strings.xml
+          <resources>
+              <string name="app_name">Antigravity Web</string>
+          </resources>
+          EOF
+
+            cat << 'EOF' > app/src/main/AndroidManifest.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <uses-permission android:name="android.permission.INTERNET" />
+              <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+              <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+              <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+              <application
+                  android:label="@string/app_name"
+                  android:usesCleartextTraffic="true"
+                  android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
+                  <activity
+                      android:name=".MainActivity"
+                      android:configChanges="orientation|screenSize|keyboardHidden"
+                      android:exported="true">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          EOF
+
+            cat << 'EOF' > app/src/main/java/com/antigravity/web/MainActivity.java
+          package com.antigravity.web;
+
+          import android.app.Activity;
+          import android.content.ClipData;
+          import android.content.ClipboardManager;
+          import android.content.Context;
+          import android.graphics.Color;
+          import android.graphics.Typeface;
+          import android.os.Bundle;
+          import android.os.PowerManager;
+          import android.view.Gravity;
+          import android.view.ViewGroup;
+          import android.webkit.WebResourceRequest;
+          import android.webkit.WebSettings;
+          import android.webkit.WebView;
+          import android.webkit.WebViewClient;
+          import android.widget.Button;
+          import android.widget.LinearLayout;
+          import android.widget.TextView;
+          import android.widget.Toast;
+          import java.io.InputStream;
+          import java.io.OutputStream;
+          import java.net.InetSocketAddress;
+          import java.net.ServerSocket;
+          import java.net.Socket;
+          import java.util.HashMap;
+          import java.util.Map;
+
+          public class MainActivity extends Activity {
+              private WebView webView;
+              private PowerManager.WakeLock wakeLock;
+              private volatile boolean proxyRunning = true;
+              private static final int PROXY_PORT = 4400;
+              private static final int TARGET_PORT = 1235;
+              private static final String CSRF_HEADER = "x-agaqkz8vmwnqfj_9qx";
+              private static final String DEFAULT_TOKEN = "907c52b4-6603-48d9-a40f-a2d710697713";
+
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  acquireWakeLock();
+                  startLocalGatewayProxy();
+
+                  LinearLayout root = new LinearLayout(this);
+                  root.setOrientation(LinearLayout.VERTICAL);
+                  root.setBackgroundColor(Color.parseColor("#070B14"));
+
+                  LinearLayout topBar = new LinearLayout(this);
+                  topBar.setOrientation(LinearLayout.HORIZONTAL);
+                  topBar.setGravity(Gravity.CENTER_VERTICAL);
+                  topBar.setPadding(28, 20, 28, 20);
+                  topBar.setBackgroundColor(Color.parseColor("#0F1626"));
+
+                  TextView title = new TextView(this);
+                  title.setText("Antigravity Web (:4400 -> :1235)");
+                  title.setTextColor(Color.parseColor("#00E5FF"));
+                  title.setTextSize(15f);
+                  title.setTypeface(Typeface.MONOSPACE, Typeface.BOLD);
+                  LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+                  topBar.addView(title, titleParams);
+
+                  Button copyCmdBtn = new Button(this);
+                  copyCmdBtn.setText("Copy npx");
+                  copyCmdBtn.setOnClickListener(v -> {
+                      ClipboardManager cb = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                      cb.setPrimaryClip(ClipData.newPlainText("npx", "npx github:hemantkumar30590-tech/Antigravityweb-onmob"));
+                      Toast.makeText(this, "Copied Termux npx command!", Toast.LENGTH_SHORT).show();
+                  });
+                  topBar.addView(copyCmdBtn);
+
+                  Button reloadBtn = new Button(this);
+                  reloadBtn.setText("Reload");
+                  reloadBtn.setOnClickListener(v -> loadGatewayUrl());
+                  topBar.addView(reloadBtn);
+
+                  root.addView(topBar, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+                  webView = new WebView(this);
+                  WebSettings ws = webView.getSettings();
+                  ws.setJavaScriptEnabled(true);
+                  ws.setDomStorageEnabled(true);
+                  ws.setDatabaseEnabled(true);
+                  ws.setUseWideViewPort(true);
+                  ws.setLoadWithOverviewMode(true);
+                  ws.setCacheMode(WebSettings.LOAD_NO_CACHE);
+
+                  webView.setWebViewClient(new WebViewClient() {
+                      @Override
+                      public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                          Map<String, String> headers = new HashMap<>();
+                          headers.put("x-codeium-csrf-token", DEFAULT_TOKEN);
+                          headers.put(CSRF_HEADER, DEFAULT_TOKEN);
+                          view.loadUrl(request.getUrl().toString(), headers);
+                          return true;
+                      }
+                  });
+
+                  root.addView(webView, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+                  setContentView(root);
+
+                  root.postDelayed(this::loadGatewayUrl, 350);
+              }
+
+              private void loadGatewayUrl() {
+                  Map<String, String> headers = new HashMap<>();
+                  headers.put("x-codeium-csrf-token", DEFAULT_TOKEN);
+                  headers.put(CSRF_HEADER, DEFAULT_TOKEN);
+                  webView.loadUrl("http://127.0.0.1:" + PROXY_PORT, headers);
+              }
+
+              private void acquireWakeLock() {
+                  try {
+                      PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+                      wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "AntigravityWeb::WakeLock");
+                      wakeLock.acquire(4 * 60 * 60 * 1000L);
+                  } catch (Exception ignored) {}
+              }
+
+              private void startLocalGatewayProxy() {
+                  new Thread(() -> {
+                      try (ServerSocket server = new ServerSocket()) {
+                          server.setReuseAddress(true);
+                          server.bind(new InetSocketAddress("0.0.0.0", PROXY_PORT));
+                          while (proxyRunning) {
+                              Socket client = server.accept();
+                              new Thread(() -> handleClient(client)).start();
+                          }
+                      } catch (Exception ignored) {}
+                  }).start();
+              }
+
+              private void handleClient(Socket client) {
+                  try (Socket c = client) {
+                      InputStream in = c.getInputStream();
+                      OutputStream out = c.getOutputStream();
+                      try (Socket backend = new Socket()) {
+                          backend.connect(new InetSocketAddress("127.0.0.1", TARGET_PORT), 1200);
+                          OutputStream bOut = backend.getOutputStream();
+                          InputStream bIn = backend.getInputStream();
+                          Thread t1 = new Thread(() -> pipe(in, bOut));
+                          Thread t2 = new Thread(() -> pipe(bIn, out));
+                          t1.start();
+                          t2.start();
+                          t1.join();
+                          t2.join();
+                      } catch (Exception e) {
+                          String html = "<!DOCTYPE html><html><head><meta name='viewport' content='width=device-width,initial-scale=1'>"
+                              + "<style>body{background:#070B14;color:#F0F4FF;font-family:sans-serif;padding:24px;}"
+                              + ".card{background:#0F1626;border:1px solid #00E5FF;border-radius:14px;padding:18px;margin-top:16px;}"
+                              + "code{display:block;background:#050811;color:#00E676;padding:12px;border-radius:8px;margin-top:8px;font-family:monospace;word-break:break-all;}"
+                              + "h2{color:#00E5FF;margin:0 0 8px 0;}</style></head><body>"
+                              + "<h2>🚀 Antigravity Web Gateway Active (:4400)</h2>"
+                              + "<p>CSRF Header Bridge & Watchdog are running. Waiting for Termux Antigravity Hub on <b>127.0.0.1:1235</b>.</p>"
+                              + "<div class='card'><b>Step 1: Run in Termux</b>"
+                              + "<code>npx github:hemantkumar30590-tech/Antigravityweb-onmob</code></div>"
+                              + "<div class='card'><b>Step 2: Tap Reload Above</b>"
+                              + "<p>Once Termux starts port 1235, tap <b>Reload</b> to open the full Antigravity IDE.</p></div>"
+                              + "</body></html>";
+                          byte[] body = html.getBytes("UTF-8");
+                          String resp = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: " + body.length + "\r\nConnection: close\r\n\r\n";
+                          out.write(resp.getBytes("UTF-8"));
+                          out.write(body);
+                          out.flush();
+                      }
+                  } catch (Exception ignored) {}
+              }
+
+              private void pipe(InputStream in, OutputStream out) {
+                  try {
+                      byte[] buf = new byte[8192];
+                      int n;
+                      while ((n = in.read(buf)) > 0) {
+                          out.write(buf, 0, n);
+                          out.flush();
+                      }
+                  } catch (Exception ignored) {}
+              }
+          }
+          EOF
+          fi
+
+      - name: Build Debug APK with Gradle
+        run: |
+          gradle assembleDebug --no-daemon
+          cp app/build/outputs/apk/debug/app-debug.apk ./AntigravityWeb.apk
+          ls -lh ./AntigravityWeb.apk
+
+      - name: Upload APK to Workflow Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: AntigravityWeb-APK
+          path: ./AntigravityWeb.apk
+
+      - name: Publish Direct Download Link on GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: "Antigravity Web Mobile APK v1.0.${{ github.run_number }}"
+          body: |
+            ### 📱 Direct APK Download
+            Click **AntigravityWeb.apk** below under **Assets** to download and install directly on Android.
+          files: ./AntigravityWeb.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
