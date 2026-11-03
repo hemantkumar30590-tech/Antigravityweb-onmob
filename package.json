@@ -1,5 +1,5 @@
 {
-  "name": "antigravity-web",
+  "name": "antigravityweb-onmob",
   "version": "1.0.0",
   "description": "Zero-config web gateway & launcher for Google Antigravity on mobile browsers and LAN",
   "main": "src/proxy.js",
@@ -22,16 +22,16 @@
     "web-gateway",
     "reverse-proxy"
   ],
-  "author": "GTAI-1",
+  "author": "hemantkumar30590-tech",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/GTAI-1/antigravity-web.git"
+    "url": "https://github.com/hemantkumar30590-tech/Antigravityweb-onmob.git"
   },
   "bugs": {
-    "url": "https://github.com/GTAI-1/antigravity-web/issues"
+    "url": "https://github.com/hemantkumar30590-tech/Antigravityweb-onmob/issues"
   },
-  "homepage": "https://github.com/GTAI-1/antigravity-web#readme",
+  "homepage": "https://github.com/hemantkumar30590-tech/Antigravityweb-onmob#readme",
   "engines": {
     "node": ">=16.0.0"
   }

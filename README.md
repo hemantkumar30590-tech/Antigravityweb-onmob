@@ -1,8 +1,8 @@
-# 🚀 Antigravity Web Gateway
+# 🚀 Antigravityweb-onmob
 
 Zero-config web gateway and launcher for **Google Antigravity IDE** on Android (Termux) mobile browsers and LAN.
 
-Run Google Antigravity seamlessly in Chrome, Brave, or any browser with full mobile touch support, 24/7 background persistence, and zero black-screen issues.
+Run Google Antigravity seamlessly in Chrome, Brave, or any mobile browser with full touch support, 24/7 background persistence, and zero black-screen issues.
 
 ---
 
@@ -11,12 +11,12 @@ Run Google Antigravity seamlessly in Chrome, Brave, or any browser with full mob
 Run directly from anywhere without cloning:
 
 ```bash
-npx github:GTAI-1/antigravity-web
+npx github:hemantkumar30590-tech/Antigravityweb-onmob
 ```
 
 Or if installed globally:
 ```bash
-npx antigravity-web
+npx antigravityweb-onmob
 ```
 
 ---
@@ -51,16 +51,16 @@ Once started, open:
 
 ```bash
 # Check if Antigravity backend and gateway are running
-npx antigravity-web --status
+npx antigravityweb-onmob --status
 
 # Stop background gateway instances
-npx antigravity-web --stop
+npx antigravityweb-onmob --stop
 
 # Custom gateway port
-npx antigravity-web --port=8080
+npx antigravityweb-onmob --port=8080
 
 # Do not open browser automatically
-npx antigravity-web --no-open
+npx antigravityweb-onmob --no-open
 ```
 
 ---
@@ -76,4 +76,4 @@ To prevent Android from killing Termux when screen is locked:
 
 ## 📄 License
 
-MIT © [GTAI-1](https://github.com/GTAI-1)
+MIT © [hemantkumar30590-tech](https://github.com/hemantkumar30590-tech)

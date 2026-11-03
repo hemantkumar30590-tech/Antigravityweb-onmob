@@ -18,8 +18,8 @@ for (const arg of args) {
 Antigravity Web — Mobile & Browser Gateway
 
 Usage:
-  npx antigravity-web [options]
-  npx github:GTAI-1/antigravity-web [options]
+  npx antigravityweb-onmob [options]
+  npx github:hemantkumar30590-tech/Antigravityweb-onmob [options]
 
 Commands:
   --status       Check if Antigravity Web Gateway & Backend are running
