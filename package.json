@@ -1,0 +1,38 @@
+{
+  "name": "antigravity-web",
+  "version": "1.0.0",
+  "description": "Zero-config web gateway & launcher for Google Antigravity on mobile browsers and LAN",
+  "main": "src/proxy.js",
+  "type": "module",
+  "bin": {
+    "antigravity-web": "bin/index.js",
+    "agy-web": "bin/index.js"
+  },
+  "scripts": {
+    "start": "node bin/index.js",
+    "status": "node bin/index.js --status",
+    "stop": "node bin/index.js --stop"
+  },
+  "keywords": [
+    "antigravity",
+    "antigravity-ide",
+    "termux",
+    "android",
+    "mobile-browser",
+    "web-gateway",
+    "reverse-proxy"
+  ],
+  "author": "GTAI-1",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GTAI-1/antigravity-web.git"
+  },
+  "bugs": {
+    "url": "https://github.com/GTAI-1/antigravity-web/issues"
+  },
+  "homepage": "https://github.com/GTAI-1/antigravity-web#readme",
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
