@@ -5,6 +5,7 @@
   "main": "src/proxy.js",
   "type": "module",
   "bin": {
+    "antigravityweb-onmob": "bin/index.js",
     "antigravity-web": "bin/index.js",
     "agy-web": "bin/index.js"
   },
