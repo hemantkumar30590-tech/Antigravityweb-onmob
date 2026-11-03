@@ -1,0 +1,13 @@
+# Git files
+.git/
+.gitignore
+.github/
+
+# Dev files
+RUN.sh
+*.log
+*.tgz
+
+# Test files
+test/
+*.test.js

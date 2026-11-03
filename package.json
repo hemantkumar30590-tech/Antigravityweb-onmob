@@ -1,7 +1,7 @@
 {
   "name": "antigravityweb-onmob",
-  "version": "1.0.0",
-  "description": "Zero-config web gateway & launcher for Google Antigravity on mobile browsers and LAN",
+  "version": "2.0.0",
+  "description": "Zero-config web gateway & launcher for Google Antigravity on mobile browsers and LAN — Upgraded: Gzip/Brotli compression, asset caching, connection pooling",
   "main": "src/proxy.js",
   "type": "module",
   "bin": {
@@ -34,6 +34,6 @@
   },
   "homepage": "https://github.com/hemantkumar30590-tech/Antigravityweb-onmob#readme",
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18.0.0"
   }
 }
